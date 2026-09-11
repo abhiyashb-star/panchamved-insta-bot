@@ -98,6 +98,20 @@ def generate_chat_reply(text, username):
         '🔗 https://youtube.com/@panchamvedproduction 🙏✨'
     )
 
+TELEGRAM_TOKEN = '8762256150:AAGVBrN6YG7W9_FsqhRkelgMcBzD_kjWoTI'
+ADMIN_CHAT_ID = 5707480311
+
+def send_telegram_alert(text):
+    try:
+        import urllib.request, json
+        url = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage'
+        payload = json.dumps({'chat_id': ADMIN_CHAT_ID, 'text': text}).encode('utf-8')
+        req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            pass
+    except Exception as e:
+        print(f'[!] Telegram alert error: {e}', flush=True)
+
 def run_instagram_bot():
     print('=' * 60)
     print('✨ CLOUD WORKER: PANCHAMVED INSTAGRAM BOT ACTIVE ✨')
@@ -171,6 +185,7 @@ def run_instagram_bot():
                         try:
                             cl.direct_send(dm_text, user_ids=[int(c.user.pk)])
                             BOT_STATS['comments_replied'] += 1
+                        send_telegram_alert(f"🔔 NEW INSTAGRAM REEL COMMENT!\n\nUser: @{username}\nComment: '{comment_text}'\nAction: Public reply sent + YouTube link DM delivered! ✨")
                         except Exception as de:
                             print(f'  [!] DM: {de}', flush=True)
 
@@ -206,6 +221,7 @@ def run_instagram_bot():
                         try:
                             cl.direct_answer(int(t.id), reply_text)
                             BOT_STATS['dms_replied'] += 1
+                            send_telegram_alert(f"💬 NEW INSTAGRAM INBOX DM!\n\nUser: @{sender_username}\nMessage: '{msg_text}'\n\n🤖 Bot Replied:\n'{reply_text[:120]}...' ✨")
                         except Exception as ae:
                             print(f'  [!] Direct answer error: {ae}', flush=True)
 
