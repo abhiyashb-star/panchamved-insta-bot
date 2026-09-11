@@ -185,7 +185,7 @@ def run_instagram_bot():
                         try:
                             cl.direct_send(dm_text, user_ids=[int(c.user.pk)])
                             BOT_STATS['comments_replied'] += 1
-                        send_telegram_alert(f"🔔 NEW INSTAGRAM REEL COMMENT!\n\nUser: @{username}\nComment: '{comment_text}'\nAction: Public reply sent + YouTube link DM delivered! ✨")
+                            send_telegram_alert(f"🔔 NEW INSTAGRAM REEL COMMENT!\n\nUser: @{username}\nComment: '{comment_text}'\nAction: Public reply sent + YouTube link DM delivered! ✨")
                         except Exception as de:
                             print(f'  [!] DM: {de}', flush=True)
 
