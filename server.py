@@ -28,7 +28,7 @@ import base64
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN', '8762256150:AAGVBrN6YG7W9_FsqhRkelgMcBzD_kjWoTI')
 ADMIN_CHAT_ID = int(os.getenv('ADMIN_CHAT_ID', '5707480311'))
 GEMINI_KEY = os.getenv('GEMINI_KEY') or base64.b64decode('QVEuQWI4Uk42SVpKZEtrNUZNZU51MGM5YjVqaTBnc3JNNUl5aDI5dW1oTVd5cWd2dW8wMWc=').decode()
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_KEY}"
+GEMINI_MODELS = ["gemini-flash-lite-latest", "gemini-3-flash-preview"]
 
 BOT_STATS = {
     'status': 'initializing',
@@ -142,25 +142,22 @@ def call_gemini(user_msg):
             }
         }
 
-    try:
-        res = requests.post(GEMINI_URL, json=payload, timeout=45)
-        if res.status_code == 200:
-            reply = res.json()['candidates'][0]['content']['parts'][0]['text']
-            with history_lock:
-                conversation_history.append({"role": "model", "parts": [{"text": reply}]})
-            return reply
-        else:
-            print(f"[!] Gemini Error HTTP {res.status_code}: {res.text}", flush=True)
-            with history_lock:
-                if conversation_history and conversation_history[-1].get("role") == "user":
-                    conversation_history.pop()
-            return "माफ कीजियेगा अभिषेक जी, AI सर्वर से उत्तर प्राप्त करने में क्षणिक बाधा आई। कृपया दोबारा लिखें।"
-    except Exception as e:
-        print(f"[!] Gemini Exception: {e}", flush=True)
-        with history_lock:
-            if conversation_history and conversation_history[-1].get("role") == "user":
-                conversation_history.pop()
-        return "माफ कीजियेगा अभिषेक जी, नेटवर्क टाइमआउट हुआ। कृपया एक बार फिर संदेश भेजें।"
+    for model_name in GEMINI_MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={GEMINI_KEY}"
+        try:
+            res = requests.post(url, json=payload, timeout=20)
+            if res.status_code == 200:
+                reply = res.json()['candidates'][0]['content']['parts'][0]['text']
+                with history_lock:
+                    conversation_history.append({"role": "model", "parts": [{"text": reply}]})
+                return reply
+        except Exception:
+            pass
+
+    with history_lock:
+        if conversation_history and conversation_history[-1].get("role") == "user":
+            conversation_history.pop()
+    return "माफ कीजियेगा अभिषेक जी, सर्वर पर क्षणिक लोड है। कृपया एक बार फिर लिखें।"
 
 def get_instagram_stats_text():
     global cl_client
